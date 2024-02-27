@@ -6,10 +6,11 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/danilzign/todo-app"
-	"github.com/danilzign/todo-app/pkg/handler"
-	"github.com/danilzign/todo-app/pkg/repository"
-	"github.com/danilzign/todo-app/pkg/service"
+	test "test"
+	"test/pkg/handler"
+	"test/pkg/repository"
+	"test/pkg/service"
+
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
@@ -44,7 +45,7 @@ func main() {
 	services := service.NewService(repos)
 	handlers := handler.NewHandler(services)
 
-	srv := new(todo.Server)
+	srv := new(test.Server)
 	go func() {
 		if err := srv.Run(viper.GetString("port"), handlers.InitRoutes()); err != nil {
 			logrus.Fatalf("error ocurred while running http server %s", err.Error())

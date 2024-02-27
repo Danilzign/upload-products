@@ -3,8 +3,9 @@ package handler
 import (
 	"net/http"
 
-	Image "github.com/danilzign/todo-app/pkg/image"
-	"github.com/danilzign/todo-app/pkg/service"
+	Image "test/pkg/image"
+	"test/pkg/service"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -20,7 +21,7 @@ func (h *Handler) InitRoutes() *gin.Engine {
 	router := gin.New()
 	api := router.Group("/api")
 	{
-		name := api.Group("/name")
+		name := api.Group("/products")
 		{
 			name.POST("/", h.createProduct)
 			name.GET("/", h.getAllProducts)
@@ -29,20 +30,12 @@ func (h *Handler) InitRoutes() *gin.Engine {
 			name.DELETE("/:id", h.deleteProduct)
 		}
 
-		images := api.Group("/image")
+		images := api.Group("/images")
 		{
 			images.Use(LiberalCORS)
-			images.Static("/stat-img", "./image")
-			images.Static("/static", "./webClient/dist")
-			images.Static("/statics", "./webClient/dist/statics")
-			images.StaticFile("/", "./webClient/dist/index.html")
-
 			images.POST("/upload_image", Image.SimpleUploadImage)
 		}
 	}
-	router.NoRoute(func(c *gin.Context) {
-		http.ServeFile(c.Writer, c.Request, "./webClient/dist/index.html")
-	})
 
 	return router
 }

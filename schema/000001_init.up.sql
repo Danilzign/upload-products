@@ -1,8 +1,8 @@
 CREATE TABLE products
 (
-    id            serial       not null unique,
+    id            uuid DEFAULT gen_random_uuid(),
     name          varchar(255) not null,
     price         serial not null,
-    amount        serial not null,
-    imageName        varchar(255) not null
+    quantity      serial not null,
+    image_name    varchar(255) not null
 );

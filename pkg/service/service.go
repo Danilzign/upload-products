@@ -1,16 +1,16 @@
 package service
 
 import (
-	"github.com/danilzign/todo-app"
-	"github.com/danilzign/todo-app/pkg/repository"
+	test "test"
+	"test/pkg/repository"
 )
 
 type Product interface {
-	Create(list todo.Product) (int, error)
-	GetAll() ([]todo.Product, error)
-	GetById(productId int) (todo.Product, error)
-	DeleteProduct(listId int) error
-	UpdateProduct(listId int, input todo.UpdateProductInput) error
+	Create(list test.Product) (string, error)
+	GetAll(limit string, page string) ([]test.Product, error)
+	GetById(productId string) (test.Product, error)
+	DeleteProduct(productId string) (string, error)
+	UpdateProduct(productId string, input test.UpdateProductInput) error
 }
 
 type Service struct {

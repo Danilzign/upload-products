@@ -1,16 +1,17 @@
 package repository
 
 import (
-	"github.com/danilzign/todo-app"
+	test "test"
+
 	"github.com/jmoiron/sqlx"
 )
 
 type Product interface {
-	Create(list todo.Product) (int, error)
-	GetAll() ([]todo.Product, error)
-	GetById(productId int) (todo.Product, error)
-	DeleteProduct(listId int) error
-	UpdateProduct(listId int, input todo.UpdateProductInput) error
+	Create(list test.Product) (string, error)
+	GetAll(limit string, page string) ([]test.Product, error)
+	GetById(productId string) (test.Product, error)
+	DeleteProduct(productId string) (string, error)
+	UpdateProduct(productId string, input test.UpdateProductInput) error
 }
 
 type Repository struct {

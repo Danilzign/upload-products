@@ -2,15 +2,15 @@ package handler
 
 import (
 	"net/http"
-	"strconv"
 
-	"github.com/danilzign/todo-app"
+	test "test"
+
 	"github.com/gin-gonic/gin"
 )
 
 func (h *Handler) createProduct(c *gin.Context) {
 
-	var input todo.Product
+	var input test.Product
 	if err := c.BindJSON(&input); err != nil {
 		NewErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
@@ -28,48 +28,42 @@ func (h *Handler) createProduct(c *gin.Context) {
 
 }
 
-type getAllListsResponse struct {
-	Data []todo.Product `json:"data"`
+type getAllProductsResponse struct {
+	Data []test.Product `json:"data"`
 }
 
 func (h *Handler) getAllProducts(c *gin.Context) {
+	limit := c.Request.URL.Query().Get("limit")
+	page := c.Request.URL.Query().Get("page")
 
-	lists, err := h.services.Product.GetAll()
+	products, err := h.services.Product.GetAll(limit, page)
 	if err != nil {
 		NewErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, getAllListsResponse{
-		Data: lists,
+	c.JSON(http.StatusOK, getAllProductsResponse{
+		Data: products,
 	})
 
 }
 
 func (h *Handler) getProductById(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		NewErrorResponse(c, http.StatusBadRequest, "invalid id param")
-		return
-	}
+	id := c.Param("id")
 
-	list, err := h.services.Product.GetById(id)
+	product, err := h.services.Product.GetById(id)
 	if err != nil {
 		NewErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, list)
+	c.JSON(http.StatusOK, product)
 }
 
 func (h *Handler) updateProduct(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		NewErrorResponse(c, http.StatusBadRequest, "invalid id param")
-		return
-	}
+	id := c.Param("id")
 
-	var input todo.UpdateProductInput
+	var input test.UpdateProductInput
 	if err := c.BindJSON(&input); err != nil {
 		NewErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
@@ -85,13 +79,9 @@ func (h *Handler) updateProduct(c *gin.Context) {
 
 func (h *Handler) deleteProduct(c *gin.Context) {
 
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		NewErrorResponse(c, http.StatusBadRequest, "invalid id param")
-		return
-	}
+	id := c.Param("id")
 
-	err = h.services.Product.DeleteProduct(id)
+	_, err := h.services.Product.DeleteProduct(id)
 	if err != nil {
 		NewErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
@@ -100,4 +90,8 @@ func (h *Handler) deleteProduct(c *gin.Context) {
 	c.JSON(http.StatusOK, statusResponse{
 		Status: "ok",
 	})
+
+	// c.JSON(http.StatusOK, map[string]interface{}{
+	// 	"imageName": imageName,
+	// })
 }

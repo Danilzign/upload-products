@@ -48,10 +48,7 @@ func SimpleUploadImage(c *gin.Context) {
 		return
 	}
 
-	var name string
-	fmt.Scan(&name)
-
-	fullFileName := fmt.Sprintf("%s.%s", name, imgExt)
+	fullFileName := fmt.Sprintf("%s.%s", RandomFilename(), imgExt)
 	fileOnDisk, err := os.Create(fmt.Sprintf("%s/%s", path, fullFileName))
 	if err != nil {
 		httpError(c, http.StatusBadRequest, fmt.Sprintf("uploadImage os.Create err: %s", err))

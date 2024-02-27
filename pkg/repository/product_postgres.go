@@ -2,10 +2,12 @@ package repository
 
 import (
 	"fmt"
-	"os"
+	"strconv"
 	"strings"
 
-	"github.com/danilzign/todo-app"
+	test "test"
+	fileName "test/pkg/image"
+
 	"github.com/jmoiron/sqlx"
 	"github.com/sirupsen/logrus"
 )
@@ -18,34 +20,41 @@ func NewProductPostgres(db *sqlx.DB) *ProductPostgres {
 	return &ProductPostgres{db: db}
 }
 
-func (r *ProductPostgres) Create(product todo.Product) (int, error) {
+func (r *ProductPostgres) Create(product test.Product) (string, error) {
 
-	var id int
-	createProductQuery := fmt.Sprintf("INSERT INTO %s (name, price, amount, imagename) VALUES ($1, $2, $3, $4) RETURNING id", productsTable)
-	row := r.db.QueryRow(createProductQuery, product.Name, product.Price, product.Amount, product.ImageName)
+	var id string
+	imageName := fileName.RandomFilename()
+	createProductQuery := fmt.Sprintf("INSERT INTO %s (name, price, quantity, image_name) VALUES ($1, $2, $3, $4) RETURNING id", productsTable)
+	row := r.db.QueryRow(createProductQuery, product.Name, product.Price, product.Quantity, imageName)
 
 	if err := row.Scan(&id); err != nil {
-		return 0, err
+		return "", err
 	}
 
 	return id, nil
 }
 
-func (r *ProductPostgres) GetAll() ([]todo.Product, error) {
-	var products []todo.Product
+func (r *ProductPostgres) GetAll(limit string, page string) ([]test.Product, error) {
+	var products []test.Product
 
-	query := fmt.Sprintf("SELECT * FROM %s", productsTable)
-	if err := r.db.Select(&products, query); err != nil {
+	limitInt, _ := strconv.Atoi(limit)
+	pageInt, _ := strconv.Atoi(page)
+	offset := limitInt * (pageInt - 1)
+
+	pagination := fmt.Sprintf("SELECT name, price, quantity FROM %s ORDER BY id LIMIT $1 OFFSET $2", productsTable)
+
+	err := r.db.Select(&products, pagination, limit, offset)
+	if err != nil {
 		return nil, err
 	}
 
 	return products, nil
 }
 
-func (r *ProductPostgres) GetById(productId int) (todo.Product, error) {
-	var product todo.Product
+func (r *ProductPostgres) GetById(productId string) (test.Product, error) {
+	var product test.Product
 
-	query := fmt.Sprintf(`SELECT * FROM %s WHERE id=$1`, productsTable)
+	query := fmt.Sprintf("SELECT * FROM %s WHERE id=$1", productsTable)
 	if err := r.db.Get(&product, query, productId); err != nil {
 		return product, err
 	}
@@ -53,32 +62,22 @@ func (r *ProductPostgres) GetById(productId int) (todo.Product, error) {
 	return product, nil
 }
 
-func (r *ProductPostgres) DeleteProduct(listId int) error {
-	stmt, err := r.db.Prepare("SELECT imagename FROM products WHERE id=$1")
-	if err != nil {
-		return err
-	}
+func (r *ProductPostgres) DeleteProduct(productId string) (string, error) {
+
+	query := fmt.Sprintf("DELETE FROM %s WHERE id=$1 RETURNING image_name", productsTable)
 
 	var imageName string
 
-	err = stmt.QueryRow(listId).Scan(&imageName)
-	if err != nil {
-		return err
-	}
+	row := r.db.QueryRow(query, productId)
+	_ = row
 
-	query := fmt.Sprintf("DELETE FROM %s WHERE id=$1", productsTable)
-	if _, err := r.db.Exec(query, listId); err != nil {
-		return err
-	}
+	err := row.Scan(&imageName)
+	_ = err
 
-	directory := fmt.Sprintf("dev/TaskTest/image/product/default/%s", imageName)
-
-	os.Remove(directory)
-
-	return nil
+	return imageName, nil
 }
 
-func (r *ProductPostgres) UpdateProduct(listId int, input todo.UpdateProductInput) error {
+func (r *ProductPostgres) UpdateProduct(productId string, input test.UpdateProductInput) error {
 	setValues := make([]string, 0)
 	args := make([]interface{}, 0)
 	argId := 1
@@ -95,21 +94,21 @@ func (r *ProductPostgres) UpdateProduct(listId int, input todo.UpdateProductInpu
 		argId++
 	}
 
-	if input.Amount != nil {
-		setValues = append(setValues, fmt.Sprintf("amount=$%d", argId))
-		args = append(args, *input.Amount)
+	if input.Quantity != nil {
+		setValues = append(setValues, fmt.Sprintf("quantity=$%d", argId))
+		args = append(args, *input.Quantity)
 		argId++
 	}
 
-	if input.Amount != nil {
-		setValues = append(setValues, fmt.Sprintf("imagename=$%d", argId))
+	if input.ImageName != nil {
+		setValues = append(setValues, fmt.Sprintf("image_name=$%d", argId))
 		args = append(args, *input.ImageName)
 		argId++
 	}
 	setQuery := strings.Join(setValues, ", ")
 
 	query := fmt.Sprintf("UPDATE %s SET %s WHERE id=$%d", productsTable, setQuery, argId)
-	args = append(args, listId)
+	args = append(args, productId)
 
 	logrus.Debugf("updateQuery: %s", query)
 	logrus.Debugf("args: %s", args)
